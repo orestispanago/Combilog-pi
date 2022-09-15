@@ -1,6 +1,4 @@
-import json
-from file_utils import mkdir_if_not_exists
-from types import SimpleNamespace
+from file_utils import json_file_to_object, mkdir_if_not_exists
 
 # paths are relative to main.py
 DATA_DIR = "data"
@@ -19,5 +17,4 @@ known_hosts_file = ""
 
 # DT_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
-with open("config/ftp.json") as f:
-    FTP_CONFIG = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
+FTP_CONFIG = json_file_to_object("config/ftp.json")
