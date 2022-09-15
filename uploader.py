@@ -1,18 +1,19 @@
 import logging
 from ftplib import FTP
-
+import os
 import pysftp
 
 logger = logging.getLogger(__name__)
 
 
 def upload_to_ftp(local_files, ftp_ip, ftp_user, ftp_password, ftp_dir):
+    base_names = [os.path.basename(x) for x in local_files]
     logger.debug("Uploading to FTP server...")
     with FTP(ftp_ip, ftp_user, ftp_password) as ftp:
         ftp.cwd(ftp_dir)
-        for local_file in local_files:
+        for local_file, remote_file in zip(local_files, base_names):
             with open(local_file, "rb") as f:
-                ftp.storbinary(f"STOR {local_file}", f)
+                ftp.storbinary(f"STOR {remote_file}", f)
     logger.info(f"Uploaded {len(local_files)} files.")
 
 
