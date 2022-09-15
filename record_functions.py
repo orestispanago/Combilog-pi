@@ -4,7 +4,7 @@ import glob
 import itertools
 import os
 
-from config.config import DATA_DIR
+from config import DATA_DIR
 
 
 def dicts_to_csv(dict_list, fname, header=False):

@@ -6,11 +6,11 @@ import pysftp
 logger = logging.getLogger(__name__)
 
 
-def upload_to_ftp(local_files, ftp_ip, ftp_user, ftp_password, ftp_dir):
+def upload_to_ftp(local_files, ftp_config):
     base_names = [os.path.basename(x) for x in local_files]
     logger.debug("Uploading to FTP server...")
-    with FTP(ftp_ip, ftp_user, ftp_password) as ftp:
-        ftp.cwd(ftp_dir)
+    with FTP(ftp_config.ip, ftp_config.user, ftp_config.passwd) as ftp:
+        ftp.cwd(ftp_config.folder)
         for local_file, remote_file in zip(local_files, base_names):
             with open(local_file, "rb") as f:
                 ftp.storbinary(f"STOR {remote_file}", f)
