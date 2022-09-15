@@ -22,10 +22,7 @@ def get_channel_list(self):
     return self.channel_list
 
 
-def read_event(
-    self,
-    pointer: Union[str, int],
-) -> Dict:
+def read_event(self, pointer: Union[str, int],) -> Dict:
     """
     read the event at the position of the pointer
     returns a dictionary with the timestamp as key
@@ -67,6 +64,7 @@ def read_logger(self, pointer: Union[str, int]):
     for i in range(logs):
         event = self.read_event(pointer)
         events.append(event)
+        print(f"Read {i} of {logs} records", sep="", end="\r", flush=True)
     return events
 
 

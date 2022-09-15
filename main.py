@@ -3,16 +3,14 @@ import logging.config
 import os
 import traceback
 
-from config import DATA_DIR, SRC_DIR
-
 # from uploader import upload_to_ftp, archive_past_days
 from datalogger import get_data_since_last_readout
 from record_functions import save_as_daily_files
 
-os.chdir(SRC_DIR)
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
+logging.config.fileConfig("config/logging.conf", disable_existing_loggers=False)
 
 logger = logging.getLogger(__name__)
 
