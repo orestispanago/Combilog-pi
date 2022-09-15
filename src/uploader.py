@@ -1,5 +1,6 @@
-from ftplib import FTP
 import logging
+from ftplib import FTP
+
 import pysftp
 
 logger = logging.getLogger(__name__)

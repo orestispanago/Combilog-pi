@@ -1,12 +1,18 @@
-from typing import Dict, List, Union
 import datetime
+import logging
+from typing import Dict, Union
+
 import combilog
+
+from record_functions import get_last_record
+
+logger = logging.getLogger(__name__)
 
 
 def get_channel_list(self):
-    """ 
-    Overrides Combilog.get_channel_list() 
-    Gets channel names using one iteration only 
+    """
+    Overrides Combilog.get_channel_list()
+    Gets channel names using one iteration only
     """
     self.channel_list = ["Datetime"]
     num_channels = self.device_info().get("nr_channels")
@@ -16,7 +22,10 @@ def get_channel_list(self):
     return self.channel_list
 
 
-def read_event(self, pointer: Union[str, int],) -> Dict:
+def read_event(
+    self,
+    pointer: Union[str, int],
+) -> Dict:
     """
     read the event at the position of the pointer
     returns a dictionary with the timestamp as key
@@ -59,3 +68,23 @@ def read_logger(self, pointer: Union[str, int]):
         event = self.read_event(pointer)
         events.append(event)
     return events
+
+
+def get_data_since_last_readout():
+    last_record = get_last_record()
+    logger.debug("Connecting to device...")
+
+    device = combilog.Combilog(logger_addr=1, port="/dev/ttyACM0", baudrate=38400)
+    device.get_channel_list()
+    logger.debug("Connection successfull. Retrieving data...")
+
+    device.pointer_to_date(1, last_record + datetime.timedelta(seconds=1))
+    records = device.read_logger(pointer=1)
+    logger.info(f"Retrieved {len(records)} records.")
+
+    return records
+
+
+combilog.Combilog.get_channel_list = get_channel_list
+combilog.Combilog.read_logger = read_logger
+combilog.Combilog.read_event = read_event

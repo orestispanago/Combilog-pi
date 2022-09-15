@@ -1,6 +1,10 @@
-import os
-import itertools
 import csv
+import datetime
+import glob
+import itertools
+import os
+
+from config import DATA_DIR
 
 
 def dicts_to_csv(dict_list, fname, header=False):
@@ -29,5 +33,16 @@ def group_by_date(records):
 def save_as_daily_files(records):
     dates = group_by_date(records)
     for d in dates:
-        output_file = f'{d[0].get("Datetime").strftime("%Y%m%d")}.csv'
-        records_to_csv(d, output_file)
+        fname = f'{d[0].get("Datetime").strftime("%Y%m%d")}.csv'
+        fpath = os.path.join(DATA_DIR, fname)
+        records_to_csv(d, fpath)
+
+
+def get_last_record():
+    local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
+    if len(local_files) > 0:
+        with open(local_files[-1], "r") as f:
+            last_line = f.readlines()[-1]
+            last_record = last_line.split(",")[0]
+            return datetime.datetime.strptime(last_record, "%Y-%m-%d %H:%M:%S")
+    return datetime.datetime(2022, 9, 14, 23, 55)
