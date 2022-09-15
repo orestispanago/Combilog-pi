@@ -11,13 +11,13 @@ def mkdir_if_not_exists(dir_path):
         os.makedirs(dir_path)
 
 
-def archive_past_days(local_files, dest_folder):
+def move_files_to_folder(src_files, dest_folder):
     mkdir_if_not_exists(dest_folder)
-    if len(local_files) > 1:
-        for local_file in local_files[:-1]:
-            new_fname = f"{dest_folder}/{local_file}"
-            os.rename(local_file, new_fname)
-            logger.info(f"Renamed file {local_file} to {new_fname}")
+    src_basenames = [os.path.basename(f) for f in src_files]
+    for src_file, src_basename in zip(src_files, src_basenames):
+        dest_file = f"{dest_folder}/{src_basename}"
+        os.rename(src_file, dest_file)
+        logger.info(f"Renamed file {src_file} to {dest_file}")
 
 
 def json_file_to_object(fname):

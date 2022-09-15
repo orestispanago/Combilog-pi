@@ -7,7 +7,7 @@ from config import DATA_DIR
 from config import FTP_CONFIG
 from uploader import upload_to_ftp
 from datalogger import get_data_since_last_readout
-from record_functions import save_as_daily_files
+from record_functions import archive_past_days, save_as_daily_files
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,7 +23,7 @@ def main():
 
     local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
     upload_to_ftp(local_files, FTP_CONFIG)
-    # archive_past_days(local_files, "archive")
+    archive_past_days(local_files, f"{DATA_DIR}/archive")
 
     logger.debug(f"{'-' * 15} SUCCESS {'-' * 15}")
 
