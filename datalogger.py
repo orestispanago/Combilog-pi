@@ -68,8 +68,8 @@ def read_logger(self, pointer: Union[str, int]):
     return events
 
 
-def get_data_since_last_readout():
-    last_record = get_last_record()
+def get_data_since_last_readout(data_dir):
+    last_record = get_last_record(data_dir)
     logger.debug("Connecting to device...")
 
     device = combilog.Combilog(logger_addr=1, port="/dev/ttyACM0", baudrate=38400)

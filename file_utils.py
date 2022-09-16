@@ -20,7 +20,7 @@ def move_files_to_folder(src_files, dest_folder):
         logger.info(f"Renamed file {src_file} to {dest_file}")
 
 
-def json_file_to_object(fname):
+def object_from_json(fname):
     with open(fname) as f:
         python_object = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
     return python_object

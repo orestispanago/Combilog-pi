@@ -4,7 +4,6 @@ import glob
 import itertools
 import os
 
-from config import DATA_DIR
 from file_utils import move_files_to_folder
 
 
@@ -31,22 +30,23 @@ def group_by_date(records):
     return dates
 
 
-def save_as_daily_files(records):
+def save_as_daily_files(records, data_dir):
     dates = group_by_date(records)
     for d in dates:
         fname = f'{d[0].get("Datetime").strftime("%Y%m%d")}.csv'
-        fpath = os.path.join(DATA_DIR, fname)
+        fpath = os.path.join(data_dir, fname)
         records_to_csv(d, fpath)
 
 
-def get_last_record():
-    local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
+def get_last_record(data_dir):
+    local_files = sorted(glob.glob(f"{data_dir}/*.csv"))
     if len(local_files) > 0:
         with open(local_files[-1], "r") as f:
             last_line = f.readlines()[-1]
             last_record = last_line.split(",")[0]
             return datetime.datetime.strptime(last_record, "%Y-%m-%d %H:%M:%S")
     return datetime.datetime(2022, 9, 14, 23, 55)
+
 
 def archive_past_days(local_files, dest_folder):
     if len(local_files) > 1:
