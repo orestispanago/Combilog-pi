@@ -3,6 +3,7 @@ import logging.config
 import os
 import traceback
 import glob
+from file_utils import mkdir_if_not_exists
 from uploader import upload_to_ftp, upload_to_sftp
 from datalogger import get_data_since_last_readout
 from record_functions import archive_past_days, save_as_daily_files
@@ -21,6 +22,9 @@ known_hosts_file = "known_hosts"
 sftp_dir = ""
 sftp_subdir = ""
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+mkdir_if_not_exists("data")
+mkdir_if_not_exists("logs")
 
 logger = logging.getLogger(__name__)
 logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
@@ -47,7 +51,6 @@ def main():
 
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     try:
         main()
     except:
