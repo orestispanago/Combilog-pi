@@ -18,6 +18,7 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL + 1)
 def main():
     datalogger = Datalogger()
     datalogger.get_data_since_last_readout()
+    datalogger.save_as_daily_files()
     local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
     upload_to_ftp(local_files)
     upload_to_sftp(local_files)

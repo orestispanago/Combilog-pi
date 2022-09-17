@@ -83,11 +83,6 @@ class Datalogger:
         )
         self.readout(pointer=1)
 
-    def records_to_csv(self, fname):
-        if not os.path.exists(fname):
-            dicts_to_csv(self.records, fname, header=True)
-        dicts_to_csv(self.records, fname)
-
     def group_records_by_date(self):
         dates = []
         date_func = lambda x: x["Datetime"].date()
@@ -96,11 +91,13 @@ class Datalogger:
         return dates
 
     def save_as_daily_files(self):
-        dates = self.group_by_date()
+        dates = self.group_records_by_date()
         for d in dates:
             fname = f'{d[0].get("Datetime").strftime("%Y%m%d")}.csv'
             fpath = os.path.join(DATA_DIR, fname)
-            self.records_to_csv(d, fpath)
+            if not os.path.exists(fpath):
+                dicts_to_csv(d, fpath, header=True)
+            dicts_to_csv(d, fpath)
 
 
 def dicts_to_csv(dict_list, fname, header=False):
@@ -110,6 +107,7 @@ def dicts_to_csv(dict_list, fname, header=False):
         if header:
             dict_writer.writeheader()
         dict_writer.writerows(dict_list)
+    logger.debug(f"Wrote {len(dict_list)} lines in {fname}")
 
 
 def mkdir_if_not_exists(dir_path):
