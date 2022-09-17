@@ -1,88 +1,131 @@
 import datetime
 import logging
-from typing import Dict, Union
-
+import os
+import glob
+import itertools
+import csv
 import combilog
 
-from record_functions import get_last_record
 
 logger = logging.getLogger(__name__)
 
-
-def get_channel_list(self):
-    """
-    Overrides Combilog.get_channel_list()
-    Gets channel names using one iteration only
-    """
-    self.channel_list = ["Datetime"]
-    num_channels = self.device_info().get("nr_channels")
-    for chan in range(1, num_channels + 1):
-        channel_name = self.get_channel_info(f"{chan:02}").get("channel_notation")
-        self.channel_list.append(channel_name)
-    return self.channel_list
+DATA_DIR = "data"
 
 
-def read_event(self, pointer: Union[str, int],) -> Dict:
-    """
-    read the event at the position of the pointer
-    returns a dictionary with the timestamp as key
-    if there are no events an empty dict is returned
-    """
-    if str(pointer) == "1":
-        call = "E"
-    elif str(pointer) == "2":
-        call = "e"
-    else:
-        raise ValueError(f"pointer must be either 1 or 2, not {pointer}")
-    with self.ser as ser:
-        telegram = f"${self.logger_addr}{call}\r".encode("latin-1")
-        ser.write(telegram)
-        resp = ser.read_until(b"\r")
-    if len(resp) > 3:
-        events = resp.decode("latin-1")[1:].split(";")
-        # the first char is the address and therefore not needed
-        date = datetime.datetime.strptime(events[0][1:], "%y%m%d%H%M%S")
-        # remove carriage return at the end
-        # and convert from IEE Std 754 Short Real Format
-        channel_values = [date]
-        for i in events[1:-1]:
-            channel_values.append(combilog._hexIEE_to_dec(i))
-        event = {key: value for key, value in zip(self.channel_list, channel_values)}
-        return event
-    else:
-        return {}
+class Datalogger:
+    def __init__(self, port="/dev/ttyACM0"):
+        self.device = combilog.Combilog(logger_addr=1, port=port, baudrate=38400)
+        self.pointers = {1: "E", 2: "e"}
+        self.records = []
+        self.last_readout = ""
+        self.channel_names = ["Datetime"]
+
+    def get_channel_names(self):
+        num_channels = self.device.device_info().get("nr_channels")
+        for chan in range(1, num_channels + 1):
+            channel_name = self.device.get_channel_info(f"{chan:02}").get(
+                "channel_notation"
+            )
+            self.channel_names.append(channel_name)
+        return self.channel_names
+
+    def readout(self, pointer: int):
+        self.get_channel_names()
+        # get number of logs
+        num_records = self.device.get_nr_events()
+        logger.debug(f"Found {num_records} records.")
+        for i in range(num_records):
+            record = self.read_record(pointer)
+            self.records.append(record)
+            print(f"Read {i} of {num_records} records", sep="", end="\r", flush=True)
+        logger.info(f"Retrieved {len(self.records)} records.")
+        return self.records
+
+    def read_record(self, pointer: int):
+        pointer_char = self.pointers[pointer]
+        with self.device.ser as ser:
+            telegram = f"${self.device.logger_addr}{pointer_char}\r".encode("latin-1")
+            ser.write(telegram)
+            resp = ser.read_until(b"\r")
+        if len(resp) > 3:
+            resp_decoded = resp.decode("latin-1")[1:].split(";")
+            # the first char is the address and therefore not needed
+            date = datetime.datetime.strptime(resp_decoded[0][1:], "%y%m%d%H%M%S")
+            # remove carriage return at the end
+            # and convert from IEE Std 754 Short Real Format
+            channel_values = [date]
+            for i in resp_decoded[1:-1]:
+                channel_values.append(combilog._hexIEE_to_dec(i))
+            record = {
+                key: value for key, value in zip(self.channel_names, channel_values)
+            }
+            return record
+        else:
+            return {}
+
+    def get_last_readout(self):
+        local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
+        if len(local_files) > 0:
+            with open(local_files[-1], "r") as f:
+                last_line = f.readlines()[-1]
+                last_readout_str = last_line.split(",")[0]
+                last_readout = datetime.datetime.strptime(
+                    last_readout_str, "%Y-%m-%d %H:%M:%S"
+                )
+                return last_readout
+        else:
+            logger.debug("No .csv file found. Reading all datalogger memory...")
+            return datetime.datetime(2022, 9, 14, 23, 55)
+
+    def get_data_since_last_readout(self):
+        self.device.pointer_to_date(
+            1, self.get_last_readout() + datetime.timedelta(seconds=1)
+        )
+        self.readout(pointer=1)
+
+    def records_to_csv(self, fname):
+        if not os.path.exists(fname):
+            dicts_to_csv(self.records, fname, header=True)
+        dicts_to_csv(self.records, fname)
+
+    def group_records_by_date(self):
+        dates = []
+        date_func = lambda x: x["Datetime"].date()
+        for key, group in itertools.groupby(self.records, date_func):
+            dates.append([g for g in group])
+        return dates
+
+    def save_as_daily_files(self):
+        dates = self.group_by_date()
+        for d in dates:
+            fname = f'{d[0].get("Datetime").strftime("%Y%m%d")}.csv'
+            fpath = os.path.join(DATA_DIR, fname)
+            self.records_to_csv(d, fpath)
 
 
-def read_logger(self, pointer: Union[str, int]):
-    """
-    reads all bookings starting from the set pointer
-    :pointer str|int: the pointer from where to read
-    """
-    # get number of logs
-    logs = self.get_nr_events()
-    events = []
-    for i in range(logs):
-        event = self.read_event(pointer)
-        events.append(event)
-        print(f"Read {i} of {logs} records", sep="", end="\r", flush=True)
-    return events
+def dicts_to_csv(dict_list, fname, header=False):
+    keys = dict_list[0].keys()
+    with open(fname, "a", newline="") as f:
+        dict_writer = csv.DictWriter(f, keys)
+        if header:
+            dict_writer.writeheader()
+        dict_writer.writerows(dict_list)
 
 
-def get_data_since_last_readout(data_dir):
-    last_record = get_last_record(data_dir)
-    logger.debug("Connecting to device...")
-
-    device = combilog.Combilog(logger_addr=1, port="/dev/ttyACM0", baudrate=38400)
-    device.get_channel_list()
-    logger.debug("Connection successfull. Retrieving data...")
-
-    device.pointer_to_date(1, last_record + datetime.timedelta(seconds=1))
-    records = device.read_logger(pointer=1)
-    logger.info(f"Retrieved {len(records)} records.")
-
-    return records
+def mkdir_if_not_exists(dir_path):
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
 
-combilog.Combilog.get_channel_list = get_channel_list
-combilog.Combilog.read_logger = read_logger
-combilog.Combilog.read_event = read_event
+def move_files_to_folder(src_files, dest_folder):
+    mkdir_if_not_exists(dest_folder)
+    src_basenames = [os.path.basename(f) for f in src_files]
+    for src_file, src_basename in zip(src_files, src_basenames):
+        dest_file = f"{dest_folder}/{src_basename}"
+        os.rename(src_file, dest_file)
+        logger.info(f"Renamed file {src_file} to {dest_file}")
+
+
+def archive_past_days(local_files, dest_folder):
+    if len(local_files) > 1:
+        move_files_to_folder(local_files[:-1], dest_folder)

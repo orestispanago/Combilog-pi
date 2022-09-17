@@ -5,8 +5,23 @@ import pysftp
 
 logger = logging.getLogger(__name__)
 
+ftp_ip = ""
+ftp_user = ""
+ftp_password = ""
+ftp_dir = "datalogger/test"
 
-def upload_to_ftp(local_files, ip, user, passwd, folder):
+
+sftp_host = ""
+sftp_user = ""
+sftp_password = ""
+sftp_dir = ""
+sftp_subdir = ""
+known_hosts_file = "known_hosts"
+
+
+def upload_to_ftp(
+    local_files, ip=ftp_ip, user=ftp_user, passwd=ftp_password, folder=ftp_dir
+):
     base_names = [os.path.basename(x) for x in local_files]
     logger.debug("Uploading to FTP server...")
     with FTP(ip, user, passwd) as ftp:
@@ -17,7 +32,15 @@ def upload_to_ftp(local_files, ip, user, passwd, folder):
     logger.info(f"Uploaded {len(local_files)} files to FTP.")
 
 
-def upload_to_sftp(local_files, host, user, passwd, known_hosts, folder, subfolder):
+def upload_to_sftp(
+    local_files,
+    host=sftp_host,
+    user=sftp_user,
+    passwd=sftp_password,
+    known_hosts=known_hosts_file,
+    folder=sftp_dir,
+    subfolder=sftp_subdir,
+):
     cnopts = pysftp.CnOpts(knownhosts=known_hosts)
     logger.debug("Uploading to SFTP server...")
     with pysftp.Connection(host, username=user, password=passwd, cnopts=cnopts) as sftp:
