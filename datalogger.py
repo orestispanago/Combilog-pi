@@ -97,7 +97,8 @@ class Datalogger:
             fpath = os.path.join(DATA_DIR, fname)
             if not os.path.exists(fpath):
                 dicts_to_csv(d, fpath, header=True)
-            dicts_to_csv(d, fpath)
+            else:
+                dicts_to_csv(d, fpath)
 
 
 def dicts_to_csv(dict_list, fname, header=False):
