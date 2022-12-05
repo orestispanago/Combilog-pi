@@ -20,9 +20,9 @@ KNOWN_HOSTS_FILE = "known_hosts"
 FTP_IP = ""
 FTP_USER = ""
 FTP_PASSWORD = ""
-FTP_DIR = "/dataloggers/test"
+FTP_DIR = "/dataloggers/suntracker"
 
-FTP_IP_FILE = "dataloggers/IP-addresses/test.txt"
+FTP_IP_FILE = "dataloggers/IP-addresses/suntracker.txt"
 
 
 def ftp_upload_file_from_memory(remote_fname, bytes_io_object):

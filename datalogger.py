@@ -22,6 +22,14 @@ class Datalogger:
         self.last_readout = ""
         self.channel_names = ["Datetime"]
 
+    def set_time_utc(self):
+        logger.debug("Setting datalogger time to UTC")
+        logger.debug(f"Current datalogger time: {self.device.read_datetime()}")
+        self.device.set_datetime(datetime.datetime.utcnow())
+        logger.debug(
+            f"Datalogger time after update: {self.device.read_datetime()}"
+        )
+
     def get_channel_names(self):
         num_channels = self.device.device_info().get("nr_channels")
         for chan in range(1, num_channels + 1):
@@ -80,14 +88,13 @@ class Datalogger:
         if len(local_files) > 0:
             with open(local_files[-1], "r") as f:
                 last_line = f.readlines()[-1]
-                last_readout_str = last_line.split(",")[0]
-                last_readout = datetime.datetime.strptime(
-                    last_readout_str, "%Y-%m-%d %H:%M:%S"
-                )
-                return last_readout
-        else:
-            logger.debug("No .csv file found. Reading all datalogger memory...")
-            return datetime.datetime(2022, 9, 14, 23, 55)
+            last_readout_str = last_line.split(",")[0]
+            last_readout = datetime.datetime.strptime(
+                last_readout_str, "%Y-%m-%d %H:%M:%S"
+            )
+            return last_readout
+        logger.warning("No .csv file found. Reading all datalogger memory...")
+        return datetime.datetime(1990, 1, 1, 0, 0, 1)
 
     def get_data_since_last_readout(self):
         self.device.pointer_to_date(

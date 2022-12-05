@@ -23,6 +23,7 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL + 1)
 def main():
     ftp_upload_ip_file()
     datalogger = Datalogger()
+    datalogger.set_time_utc()
     datalogger.get_data_since_last_readout()
     datalogger.save_as_daily_files()
     local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
