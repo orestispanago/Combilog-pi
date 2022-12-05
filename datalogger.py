@@ -20,7 +20,7 @@ class Datalogger:
         self.pointers = {1: "E", 2: "e"}
         self.records = []
         self.last_readout = ""
-        self.channel_names = ["Datetime"]
+        self.channel_names = ["Datetime_UTC"]
 
     def set_time_utc(self):
         logger.debug("Setting datalogger time to UTC")
@@ -104,7 +104,7 @@ class Datalogger:
 
     def group_records_by_date(self):
         dates = []
-        date_func = lambda x: x["Datetime"].date()
+        date_func = lambda x: x["Datetime_UTC"].date()
         for key, group in itertools.groupby(self.records, date_func):
             dates.append([g for g in group])
         return dates
@@ -112,7 +112,7 @@ class Datalogger:
     def save_as_daily_files(self):
         dates = self.group_records_by_date()
         for d in dates:
-            fname = f'{d[0].get("Datetime").strftime("%Y%m%d")}.csv'
+            fname = f'{d[0].get("Datetime_UTC").strftime("%Y%m%d")}.csv'
             fpath = os.path.join(DATA_DIR, fname)
             if not os.path.exists(fpath):
                 dicts_to_csv(d, fpath, header=True)

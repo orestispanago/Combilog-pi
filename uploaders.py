@@ -52,7 +52,7 @@ def ftp_make_dirs(ftp_session, folder_path):
 def ftp_upload_file(ftp_session, local_path, remote_path):
     with open(local_path, "rb") as f:
         ftp_session.storbinary(f"STOR {remote_path}", f)
-    logger.info(f"Uploaded {local_path} to {remote_path}")
+    logger.info(f"Uploaded {local_path} to {remote_path} at FTP")
 
 
 def ftp_upload_files_list(local_files):
@@ -83,4 +83,5 @@ def sftp_upload_files_list(local_files):
         sftp.chdir(SFTP_SUBDIR)
         for local_file in local_files:
             sftp.put(local_file)
+            logger.debug(f"Uploaded {local_file} to SFTP")
     logger.info(f"Uploaded {len(local_files)} files to SFTP.")
