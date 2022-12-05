@@ -1,11 +1,16 @@
+import glob
 import logging
 import logging.config
 import os
 import traceback
-import glob
-from uploaders import upload_to_ftp, upload_to_sftp
-from datalogger import Datalogger, archive_past_days, DATA_DIR
 
+from datalogger import DATA_DIR, Datalogger
+from uploaders import (
+    ftp_upload_files_list,
+    ftp_upload_ip_file,
+    sftp_upload_files_list,
+)
+from utils import archive_past_days
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -16,13 +21,14 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL + 1)
 
 
 def main():
+    ftp_upload_ip_file()
     datalogger = Datalogger()
     datalogger.get_data_since_last_readout()
     datalogger.save_as_daily_files()
     local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
-    upload_to_ftp(local_files)
-    upload_to_sftp(local_files)
-    archive_past_days(local_files, f"{DATA_DIR}/archive")
+    ftp_upload_files_list(local_files)
+    sftp_upload_files_list(local_files)
+    archive_past_days(local_files)
     logger.debug(f"{'-' * 15} SUCCESS {'-' * 15}")
 
 
@@ -31,4 +37,3 @@ if __name__ == "__main__":
         main()
     except:
         logger.error("uncaught exception: %s", traceback.format_exc())
-

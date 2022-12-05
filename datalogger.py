@@ -1,11 +1,11 @@
+import csv
 import datetime
-import logging
-import os
 import glob
 import itertools
-import csv
-import combilog
+import logging
+import os
 
+import combilog
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,9 @@ DATA_DIR = "data"
 
 class Datalogger:
     def __init__(self, port="/dev/ttyACM0"):
-        self.device = combilog.Combilog(logger_addr=1, port=port, baudrate=38400)
+        self.device = combilog.Combilog(
+            logger_addr=1, port=port, baudrate=38400
+        )
         self.pointers = {1: "E", 2: "e"}
         self.records = []
         self.last_readout = ""
@@ -37,27 +39,37 @@ class Datalogger:
         for i in range(num_records):
             record = self.read_record(pointer)
             self.records.append(record)
-            print(f"Read {i} of {num_records} records", sep="", end="\r", flush=True)
+            print(
+                f"Read {i} of {num_records} records",
+                sep="",
+                end="\r",
+                flush=True,
+            )
         logger.info(f"Retrieved {len(self.records)} records.")
         return self.records
 
     def read_record(self, pointer: int):
         pointer_char = self.pointers[pointer]
         with self.device.ser as ser:
-            telegram = f"${self.device.logger_addr}{pointer_char}\r".encode("latin-1")
+            telegram = f"${self.device.logger_addr}{pointer_char}\r".encode(
+                "latin-1"
+            )
             ser.write(telegram)
             resp = ser.read_until(b"\r")
         if len(resp) > 3:
             resp_decoded = resp.decode("latin-1")[1:].split(";")
             # the first char is the address and therefore not needed
-            date = datetime.datetime.strptime(resp_decoded[0][1:], "%y%m%d%H%M%S")
+            date = datetime.datetime.strptime(
+                resp_decoded[0][1:], "%y%m%d%H%M%S"
+            )
             # remove carriage return at the end
             # and convert from IEE Std 754 Short Real Format
             channel_values = [date]
             for i in resp_decoded[1:-1]:
                 channel_values.append(combilog._hexIEE_to_dec(i))
             record = {
-                key: value for key, value in zip(self.channel_names, channel_values)
+                key: value
+                for key, value in zip(self.channel_names, channel_values)
             }
             return record
         else:
@@ -109,22 +121,3 @@ def dicts_to_csv(dict_list, fname, header=False):
             dict_writer.writeheader()
         dict_writer.writerows(dict_list)
     logger.debug(f"Wrote {len(dict_list)} lines in {fname}")
-
-
-def mkdir_if_not_exists(dir_path):
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-
-
-def move_files_to_folder(src_files, dest_folder):
-    mkdir_if_not_exists(dest_folder)
-    src_basenames = [os.path.basename(f) for f in src_files]
-    for src_file, src_basename in zip(src_files, src_basenames):
-        dest_file = f"{dest_folder}/{src_basename}"
-        os.rename(src_file, dest_file)
-        logger.info(f"Renamed file {src_file} to {dest_file}")
-
-
-def archive_past_days(local_files, dest_folder):
-    if len(local_files) > 1:
-        move_files_to_folder(local_files[:-1], dest_folder)

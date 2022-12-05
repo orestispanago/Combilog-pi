@@ -1,53 +1,86 @@
 import logging
-from ftplib import FTP
 import os
+from ftplib import FTP, error_perm
+
 import pysftp
+
+import utils
 
 logger = logging.getLogger(__name__)
 
-ftp_ip = ""
-ftp_user = ""
-ftp_password = ""
-ftp_dir = "datalogger/test"
+
+SFTP_HOST = ""
+SFTP_USER = ""
+SFTP_PASSWORD = ""
+SFTP_DIR = ""
+SFTP_SUBDIR = ""
+KNOWN_HOSTS_FILE = "known_hosts"
 
 
-sftp_host = ""
-sftp_user = ""
-sftp_password = ""
-sftp_dir = ""
-sftp_subdir = ""
-known_hosts_file = "known_hosts"
+FTP_IP = ""
+FTP_USER = ""
+FTP_PASSWORD = ""
+FTP_DIR = "/dataloggers/test"
+
+FTP_IP_FILE = "dataloggers/IP-addresses/test.txt"
 
 
-def upload_to_ftp(
-    local_files, ip=ftp_ip, user=ftp_user, passwd=ftp_password, folder=ftp_dir
-):
-    base_names = [os.path.basename(x) for x in local_files]
-    logger.debug("Uploading to FTP server...")
-    with FTP(ip, user, passwd) as ftp:
-        ftp.cwd(folder)
-        for local_file, remote_file in zip(local_files, base_names):
-            with open(local_file, "rb") as f:
-                ftp.storbinary(f"STOR {remote_file}", f)
-    logger.info(f"Uploaded {len(local_files)} files to FTP.")
+def ftp_upload_file_from_memory(remote_fname, bytes_io_object):
+    with FTP(FTP_IP, FTP_USER, FTP_PASSWORD) as ftp:
+        ftp.storbinary(f"STOR {remote_fname}", bytes_io_object)
+    logger.info(f"Created file {remote_fname} at FTP")
 
 
-def upload_to_sftp(
-    local_files,
-    host=sftp_host,
-    user=sftp_user,
-    passwd=sftp_password,
-    known_hosts=known_hosts_file,
-    folder=sftp_dir,
-    subfolder=sftp_subdir,
-):
-    cnopts = pysftp.CnOpts(knownhosts=known_hosts)
+def ftp_upload_ip_file():
+    external_ip = utils.get_external_ip()
+    ip_bytes_io = utils.str_to_bytes_io(external_ip)
+    ftp_upload_file_from_memory(FTP_IP_FILE, ip_bytes_io)
+
+
+def ftp_mkdir_and_enter(ftp_session, dir_name):
+    if dir_name not in ftp_session.nlst():
+        ftp_session.mkd(dir_name)
+        logger.debug(f"Created FTP directory {dir_name}")
+    ftp_session.cwd(dir_name)
+
+
+def ftp_make_dirs(ftp_session, folder_path):
+    for f in folder_path.split("/"):
+        ftp_mkdir_and_enter(ftp_session, f)
+
+
+def ftp_upload_file(ftp_session, local_path, remote_path):
+    with open(local_path, "rb") as f:
+        ftp_session.storbinary(f"STOR {remote_path}", f)
+    logger.info(f"Uploaded {local_path} to {remote_path}")
+
+
+def ftp_upload_files_list(local_files):
+    with FTP(FTP_IP, FTP_USER, FTP_PASSWORD) as ftp:
+        ftp.cwd(FTP_DIR)
+        for local_file in local_files:
+            base_name = os.path.basename(local_file)
+            year = base_name[:4]
+            remote_path = f"{year}/{base_name}"
+            try:
+                ftp_upload_file(ftp, local_file, remote_path)
+            except error_perm as e:
+                if "55" in str(e):
+                    ftp_make_dirs(ftp, os.path.dirname(remote_path))
+                    ftp.cwd(FTP_DIR)
+                    ftp_upload_file(ftp, local_file, remote_path)
+
+
+def sftp_upload_files_list(local_files):
+    cnopts = pysftp.CnOpts(knownhosts=KNOWN_HOSTS_FILE)
     logger.debug("Uploading to SFTP server...")
-    with pysftp.Connection(host, username=user, password=passwd, cnopts=cnopts) as sftp:
-        sftp.cwd(folder)
-        if subfolder not in sftp.listdir():
-            sftp.mkdir(subfolder)
-        sftp.chdir(subfolder)
+    with pysftp.Connection(
+        SFTP_HOST, username=SFTP_USER, password=SFTP_PASSWORD, cnopts=cnopts
+    ) as sftp:
+        sftp.cwd(SFTP_DIR)
+        if SFTP_SUBDIR not in sftp.listdir():
+            sftp.mkdir(SFTP_SUBDIR)
+        sftp.chdir(SFTP_SUBDIR)
         for local_file in local_files:
             sftp.put(local_file)
     logger.info(f"Uploaded {len(local_files)} files to SFTP.")
