@@ -4,37 +4,21 @@ from ftplib import FTP, error_perm
 
 import pysftp
 
-import utils
-
 logger = logging.getLogger(__name__)
 
 
 SFTP_HOST = ""
 SFTP_USER = ""
 SFTP_PASSWORD = ""
-SFTP_DIR = ""
-SFTP_SUBDIR = ""
+SFTP_DIR = "/test"
+SFTP_SUBDIR = "suntracker"
 KNOWN_HOSTS_FILE = "known_hosts"
 
 
 FTP_IP = ""
 FTP_USER = ""
 FTP_PASSWORD = ""
-FTP_DIR = "/dataloggers/suntracker"
-
-FTP_IP_FILE = "dataloggers/IP-addresses/suntracker.txt"
-
-
-def ftp_upload_file_from_memory(remote_fname, bytes_io_object):
-    with FTP(FTP_IP, FTP_USER, FTP_PASSWORD) as ftp:
-        ftp.storbinary(f"STOR {remote_fname}", bytes_io_object)
-    logger.info(f"Created file {remote_fname} at FTP")
-
-
-def ftp_upload_ip_file():
-    external_ip = utils.get_external_ip()
-    ip_bytes_io = utils.str_to_bytes_io(external_ip)
-    ftp_upload_file_from_memory(FTP_IP_FILE, ip_bytes_io)
+FTP_DIR = "/dataloggers/test"
 
 
 def ftp_mkdir_and_enter(ftp_session, dir_name):

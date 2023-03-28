@@ -5,11 +5,7 @@ import os
 import traceback
 
 from datalogger import DATA_DIR, Datalogger
-from uploaders import (
-    ftp_upload_files_list,
-    ftp_upload_ip_file,
-    sftp_upload_files_list,
-)
+from uploaders import ftp_upload_files_list, sftp_upload_files_list
 from utils import archive_past_days
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -17,11 +13,10 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 logger = logging.getLogger(__name__)
 logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
-logging.getLogger("paramiko").setLevel(logging.CRITICAL + 1)
+logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 
 def main():
-    ftp_upload_ip_file()
     datalogger = Datalogger()
     datalogger.set_time_utc()
     datalogger.get_data_since_last_readout()

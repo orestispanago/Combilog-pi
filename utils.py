@@ -14,21 +14,6 @@ def mkdir_if_not_exists(dir_path):
         logger.debug(f"Created local directory {dir_path}")
 
 
-def get_external_ip():
-    external_ip = (
-        urllib.request.urlopen("https://ifconfig.me/ip").read().decode("utf-8")
-    )
-    logger.debug(f"External IP: {external_ip}")
-    return external_ip
-
-
-def str_to_bytes_io(text):
-    bio = io.BytesIO()
-    bio.write(text.encode())
-    bio.seek(0)  # move to beginning of file
-    return bio
-
-
 def archive_past_days(local_files):
     if len(local_files) > 1:
         for local_file in local_files[:-1]:

@@ -13,7 +13,7 @@ DATA_DIR = "data"
 
 
 class Datalogger:
-    def __init__(self, port="/dev/ttyACM0"):
+    def __init__(self, port="/dev/ttyUSB0"):
         self.device = combilog.Combilog(
             logger_addr=1, port=port, baudrate=38400
         )
