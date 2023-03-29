@@ -20,7 +20,7 @@ Add your ```known_hosts``` file for the SFTP server connection.
 To avoid overlapping cron job execution, use ```flock``` in crontab:
 
 ```
-*/5 * * * * /usr/bin/flock -w 0 ~/flock_file.lock python3 ~/Combilog-pi/main.py
+*/5 * * * * /usr/bin/flock -w 0 ~/combilog_pi.lock python3 ~/Combilog-pi/main.py
 ```
 
 To check if your cron job is running:

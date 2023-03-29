@@ -20,7 +20,7 @@ def main():
     datalogger = Datalogger()
     datalogger.set_time_utc()
     datalogger.get_data_since_last_readout()
-    datalogger.save_as_daily_files()
+    datalogger.save_as_daily_files(prefix="suntracker10sec_")
     local_files = sorted(glob.glob(f"{DATA_DIR}/*.csv"))
     ftp_upload_files_list(local_files)
     sftp_upload_files_list(local_files)

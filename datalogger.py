@@ -13,7 +13,7 @@ DATA_DIR = "data"
 
 
 class Datalogger:
-    def __init__(self, port="/dev/ttyUSB0"):
+    def __init__(self, port="/dev/ttyACM0"):
         self.device = combilog.Combilog(
             logger_addr=1, port=port, baudrate=38400
         )
@@ -96,10 +96,10 @@ class Datalogger:
             dates.append([g for g in group])
         return dates
 
-    def save_as_daily_files(self):
+    def save_as_daily_files(self, prefix="prefix_"):
         dates = self.group_records_by_date()
         for d in dates:
-            fname = f'{d[0].get("Datetime_UTC").strftime("%Y%m%d")}.csv'
+            fname = f'{prefix}{d[0].get("Datetime_UTC").strftime("%Y%m%d")}.csv'
             fpath = os.path.join(DATA_DIR, fname)
             if not os.path.exists(fpath):
                 dicts_to_csv(d, fpath, header=True)
