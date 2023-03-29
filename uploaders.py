@@ -44,7 +44,7 @@ def ftp_upload_files_list(local_files):
         ftp.cwd(FTP_DIR)
         for local_file in local_files:
             base_name = os.path.basename(local_file)
-            year = base_name[:4]
+            year = base_name.split("_")[1][:4]
             remote_path = f"{year}/{base_name}"
             try:
                 ftp_upload_file(ftp, local_file, remote_path)
